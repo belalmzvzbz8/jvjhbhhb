@@ -1,0 +1,49 @@
+from telethon import TelegramClient, events, functions, types
+import asyncio
+##########
+api_id = 'api_id' #مطلوب تغيرها
+
+api_hash = 'api_hash' #مطلوب تغيرها
+
+session_name = 'c' #لا تغيرها
+
+group_id = '@' #معرف مجموعه الي تريد تنقل منها اعضاء
+
+ch = '@' #قناتك
+###########
+client = TelegramClient(session_name, api_id, api_hash)
+
+async def invite_members_to_channel():
+
+    group_entity = await client.get_entity(group_id)
+    members = []
+    async for member in client.iter_participants(group_entity):
+        members.append(member)
+
+    while members:
+        crr = members[:4]
+        members = members[4:]
+
+        try:
+            await client(functions.channels.InviteToChannelRequest(
+                ch,
+                [types.InputUser(user.id, user.access_hash) for user in crr]
+            ))
+            print(f'{len(crr)} م اضافه {ch} بنجاح')
+        except Exception as e:
+            print(f'فشل اضافه{ch}: {str(e)}')
+
+
+        await asyncio.sleep(25)
+
+
+@client.on(events.NewMessage(pattern='/start'))
+async def start_member_transfer(event):
+    await invite_members_to_channel()
+
+
+    await event.respond('تم انتهاء!')
+
+
+client.start()
+client.run_until_disconnected()
